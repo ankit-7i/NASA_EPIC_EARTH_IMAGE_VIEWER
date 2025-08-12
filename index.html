@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NASA EPIC Earth Image Viewer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at center, #1e3c72, #2a5298);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 15px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2em;
+      margin-bottom: 20px;
+      color: #ffd700;
+      animation: fadeInDown 1s ease;
+    }
+
+    .form {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+      animation: fadeInUp 1.2s ease;
+    }
+
+    input[type="date"] {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #ffd700;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #e6c200;
+    }
+
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #ffd700;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 40px auto;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+      margin-top: 20px;
+      animation: fadeIn 1.5s ease;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      text-align: center;
+    }
+
+    .card img {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .caption {
+      font-size: 0.95em;
+      font-weight: 300;
+      color: #ffd;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌍 NASA EPIC Earth Image Viewer</h1>
+
+  <div class="form">
+    <input type="date" id="dateInput" max="">
+    <button onclick="getEpicImages()">Get Earth Images</button>
+  </div>
+
+  <div id="loader" class="loader" style="display:none;"></div>
+  <div id="gallery" class="gallery"></div>
+
+  <script>
+    const API_KEY = "T8QgswRR4yn7LnBsjBfflbdUXlT9fSFCgnfBhXHH";
+
+    
+    document.getElementById("dateInput").max = new Date().toISOString().split("T")[0];
+
+    function getEpicImages() {
+      const date = document.getElementById("dateInput").value;
+      if (!date) return alert("Please select a date!");
+
+      document.getElementById("gallery").innerHTML = '';
+      document.getElementById("loader").style.display = 'block';
+
+      const url = `https://api.nasa.gov/EPIC/api/natural/date/${date}?api_key=${API_KEY}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(images => {
+          document.getElementById("loader").style.display = 'none';
+
+          if (!images.length) {
+            document.getElementById("gallery").innerHTML = "<p>No images available for this date.</p>";
+            return;
+          }
+
+          const formattedDate = date.replace(/-/g, "/");
+
+          images.forEach(img => {
+            const imageUrl = `https://epic.gsfc.nasa.gov/archive/natural/${formattedDate}/png/${img.image}.png`;
+
+            const card = document.createElement("div");
+            card.className = "card";
+
+            card.innerHTML = `
+              <img src="${imageUrl}" alt="Earth image" loading="lazy" />
+              <div class="caption">
+                <strong>Caption:</strong> ${img.caption || 'No caption'}<br/>
+                <strong>Time:</strong> ${img.date}
+              </div>
+            `;
+            document.getElementById("gallery").appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById("loader").style.display = 'none';
+          document.getElementById("gallery").innerHTML = "<p>Error fetching images. Try another date.</p>";
+        });
+    }
+  </script>
+
+</body>
+</html>
